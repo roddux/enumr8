@@ -9,7 +9,7 @@
 head $0 -n8|sed -e'1d' -e's/^#//g'
 _PIFS=$IFS
 
-DNS="@194.168.4.100"
+DNS="@1.1.1.1"
 export DNS
 
 check_tools() {
@@ -25,12 +25,13 @@ check_tools() {
 
 subdomains() {
 	echo "[+] Enumerating subdomains for $1 ..."
+	touch $sub_output
 	sublist3r -d $1 -o $sub_output &>/dev/null
 	sort $sub_output -o $sub_output
 }
 
 resolve_sub() {
-	set -x
+#	set -x
 	record_types="A AAAA CERT CNAME HINFO NS MX PTR SOA SRV TXT URI AXFR"
 	sub=$1
 	for T in $record_types; do
@@ -60,7 +61,7 @@ resolve_sub() {
 }
 
 get_resolving() {
-	set -x
+#	set -x
 	echo "[+] Gathering IPs for resolvable subdomains ..."
 	export -f resolve_sub
 	export resolved_output
@@ -68,7 +69,7 @@ get_resolving() {
 	if [ ! -d "$base/dns" ]; then
 		mkdir "$base/dns"
 	fi
-	echo "sub output is '$sub_output'"
+	touch $resolved_output
 	cat "$sub_output" | xargs -I{} bash -c 'resolve_sub {}'
 	sort -u $resolved_output -o $resolved_output
 }
@@ -83,6 +84,7 @@ get_alt_domain() {
 
 find_alt_cert_domains() {
 	echo "[+] Searching alternate domains via certificate scan ..."
+	touch $alt_domain_output
 	for D in $(cat $1); do
 		get_alt_domain $1 >> $alt_domain_output
 	done
@@ -93,7 +95,7 @@ find_alt_cert_domains() {
 }
 
 main() {
-	# TODO: use spyce api, censys, shodan
+	# TODO: use spyce api, censys, shodan, crt.sh, whoxy.com
 
 	# enumerate subdomains
 	# scan related certificates
